@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>极简音频切片器</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5f7; padding: 20px; color: #333; }
+        .container { max-width: 520px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #2c3e50; }
+        .file-upload { display: block; width: 100%; margin-bottom: 20px; }
+        .audio-player { width: 100%; margin-bottom: 20px; display: none; }
+        .control-group { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e9ecef; }
+        .time-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .time-row:last-child { margin-bottom: 0; }
+        .time-inputs { display: inline-flex; align-items: center; gap: 4px; }
+        .time-inputs input { width: 42px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .time-inputs input.sec-input { width: 55px; }
+        button { background: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: 0.2s; white-space: nowrap; }
+        button:hover { background: #0056b3; }
+        button:active { transform: scale(0.98); }
+        .btn-large { width: 100%; padding: 12px; font-size: 1.1em; background: #28a745; margin-top: 10px; }
+        .btn-large:hover { background: #218838; }
+        .hint { font-size: 0.85em; color: #666; margin-top: 5px; text-align: center; }
+        #status { text-align: center; color: #d35400; font-weight: bold; margin-top: 15px; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎵 极简音频切片器</h2>
+    
+    <input type="file" id="audioInput" class="file-upload" accept="audio/*">
+    <audio id="player" class="audio-player" controls></audio>
+
+    <div class="control-group">
+        <!-- T1 起始点 -->
+        <div class="time-row">
+            <label>起始点 (T1):</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="time-inputs">
+                    <input type="number" id="t1_h" value="0" min="0"> 时
+                    <input type="number" id="t1_m" value="0" min="0" max="59"> 分
+                    <input type="number" id="t1_s" class="sec-input" value="0.0" min="0" max="59.99" step="0.1"> 秒
+                </div>
+                <button onclick="setCurrentTime('t1')">定位</button>
+            </div>
+        </div>
+
+        <!-- T2 结束点 -->
+        <div class="time-row">
+            <label>结束点 (T2):</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="time-inputs">
+                    <input type="number" id="t2_h" value="0" min="0"> 时
+                    <input type="number" id="t2_m" value="0" min="0" max="59"> 分
+                    <input type="number" id="t2_s" class="sec-input" value="15.0" min="0" max="59.99" step="0.1"> 秒
+                </div>
+                <button onclick="setCurrentTime('t2')">定位</button>
+            </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 12px;">
+            <button onclick="previewSelection()" style="background: #17a2b8; padding: 7px 14px;">▶ 试听选中片段</button>
+        </div>
+    </div>
+
+    <button id="trimBtn" class="btn-large">✂️ 裁剪并保存 (WAV)</button>
+    <div class="hint">*离线环境下由浏览器无损渲染为 WAV 格式</div>
+    <div id="status"></div>
+</div>
+
+<script>
+    const audioInput = document.getElementById('audioInput');
+    const player = document.getElementById('player');
+    const statusDiv = document.getElementById('status');
+    const trimBtn = document.getElementById('trimBtn');
+
+    let audioContext = null;
+    let originalAudioBuffer = null;
+    let fileName = "cut_audio";
+    let previewTimer = null;
+
+    // 读取时间（转为秒数）
+    function getTimeInSeconds(prefix) {
+        const h = parseFloat(document.getElementById(`${prefix}_h`).value) || 0;
+        const m = parseFloat(document.getElementById(`${prefix}_m`).value) || 0;
+        const s = parseFloat(document.getElementById(`${prefix}_s`).value) || 0;
+        return h * 3600 + m * 60 + s;
+    }
+
+    // 写入时间（从秒数转回 时/分/秒）
+    function setTimeFromSeconds(prefix, totalSec) {
+        totalSec = Math.max(0, totalSec);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = (totalSec % 60).toFixed(2);
+
+        document.getElementById(`${prefix}_h`).value = h;
+        document.getElementById(`${prefix}_m`).value = m;
+        document.getElementById(`${prefix}_s`).value = s;
+    }
+
+    audioInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        fileName = file.name.replace(/\.[^/.]+$/, "");
+        player.src = URL.createObjectURL(file);
+        player.style.display = 'block';
+        
+        statusDiv.innerText = "⏳ 正在解析音频数据...";
+        trimBtn.disabled = true;
+        
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            originalAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // 默认 T2 设为 15 秒或音频全长
+            setTimeFromSeconds('t2', Math.min(15, originalAudioBuffer.duration));
+            
+            statusDiv.innerText = "✅ 解析完成，可以裁剪。";
+            trimBtn.disabled = false;
+        } catch (err) {
+            statusDiv.innerText = "❌ 解析失败，文件格式不支持。";
+            console.error(err);
+        }
+    });
+
+    function setCurrentTime(prefix) {
+        if (!player.src) return alert("请先选择音频");
+        setTimeFromSeconds(prefix, player.currentTime);
+    }
+
+    function previewSelection() {
+        if (!player.src) return alert("请先选择音频");
+        const t1 = getTimeInSeconds('t1');
+        const t2 = getTimeInSeconds('t2');
+        if (t1 >= t2) return alert("结束时间 (T2) 必须大于起始时间 (T1)");
+        
+        if (previewTimer) clearInterval(previewTimer);
+
+        player.currentTime = t1;
+        player.play();
+        
+        previewTimer = setInterval(() => {
+            if (player.currentTime >= t2 || player.paused) {
+                player.pause();
+                clearInterval(previewTimer);
+            }
+        }, 80);
+    }
+
+    trimBtn.onclick = () => {
+        if (!originalAudioBuffer) return alert('音频未准备好');
+        
+        const t1 = getTimeInSeconds('t1');
+        const t2 = getTimeInSeconds('t2');
+        if (t2 <= t1) return alert('T2 必须大于 T1');
+        if (t2 > originalAudioBuffer.duration) return alert('T2 超过音频总时长');
+
+        statusDiv.innerText = "⏳ 正在导出切片...";
+        
+        setTimeout(() => {
+            const sampleRate = originalAudioBuffer.sampleRate;
+            const startOffset = Math.floor(t1 * sampleRate);
+            const endOffset = Math.min(Math.floor(t2 * sampleRate), originalAudioBuffer.length);
+            const frameCount = endOffset - startOffset;
+
+            const trimmedBuffer = audioContext.createBuffer(
+                originalAudioBuffer.numberOfChannels, 
+                frameCount, 
+                sampleRate
+            );
+
+            for (let ch = 0; ch < originalAudioBuffer.numberOfChannels; ch++) {
+                trimmedBuffer.copyToChannel(
+                    originalAudioBuffer.getChannelData(ch).subarray(startOffset, endOffset), 
+                    ch
+                );
+            }
+
+            const wavBlob = bufferToWave(trimmedBuffer, frameCount);
+            const url = URL.createObjectURL(wavBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}_cut_${t1.toFixed(1)}s-${t2.toFixed(1)}s.wav`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            statusDiv.innerText = "✅ 导出成功！";
+        }, 50);
+    };
+
+    function bufferToWave(abuffer, len) {
+        const numOfChan = abuffer.numberOfChannels, length = len * numOfChan * 2 + 44;
+        const out = new DataView(new ArrayBuffer(length)), channels = [];
+        let sample, offset = 0, pos = 0;
+        
+        function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+        function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+        
+        setUint32(0x46464952); // "RIFF"
+        setUint32(length - 8); 
+        setUint32(0x45564157); // "WAVE"
+        setUint32(0x20746d66); // "fmt "
+        setUint32(16);         
+        setUint16(1);          
+        setUint16(numOfChan);
+        setUint32(abuffer.sampleRate);
+        setUint32(abuffer.sampleRate * 2 * numOfChan);
+        setUint16(numOfChan * 2);                      
+        setUint16(16);                                 
+        setUint32(0x61746164); // "data"
+        setUint32(length - pos - 4);                   
+        
+        for (let i = 0; i < abuffer.numberOfChannels; i++) {
+            channels.push(abuffer.getChannelData(i));
+        }
+        
+        while (offset < len) {
+            for (let i = 0; i < numOfChan; i++) {
+                sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                out.setInt16(pos, sample, true);
+                pos += 2;
+            }
+            offset++;
+        }
+        return new Blob([out], { type: "audio/wav" });
+    }
+</script>
+</body>
+</html>
