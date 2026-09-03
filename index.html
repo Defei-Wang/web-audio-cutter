@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -36,9 +36,10 @@
             background: #eef1f5;
             color: #333;
             border: 1px solid #dcdfe6;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
         }
         .file-upload-wrapper {
@@ -176,45 +177,44 @@
 
 <div class="container">
     <div class="header-row">
-        <h2 data-i18n="title">🎵 极简音频切片器</h2>
-        <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">EN</button>
+        <h2 data-i18n="title">🎵 Web Audio Cutter</h2>
+        <button id="langToggle" class="lang-btn" type="button">中文</button>
     </div>
     
     <input type="file" id="audioInput" accept="audio/*" style="display: none;">
     
     <div class="file-upload-wrapper">
-        <button type="button" class="file-custom-btn" onclick="document.getElementById('audioInput').click()" data-i18n="btn_choose_file">选择文件</button>
-        <span id="fileNameDisplay" class="file-name-display" data-i18n="no_file_chosen">未选择任何文件</span>
+        <button type="button" class="file-custom-btn" onclick="document.getElementById('audioInput').click()" data-i18n="btn_choose_file">Choose File</button>
+        <span id="fileNameDisplay" class="file-name-display" data-i18n="no_file_chosen">No file selected</span>
     </div>
 
     <audio id="player" class="audio-player" controls playsinline></audio>
 
     <div class="control-group">
+        <!-- T1 -->
         <div class="time-row">
-            <label data-i18n="lbl_t1">起始点 (T1):</label>
+            <label data-i18n="lbl_t1">Start (T1):</label>
             <div class="action-btns">
                 <div class="time-inputs">
-                    <input type="number" id="t1_h" value="0" min="0"> <span data-i18n="unit_h">时</span>
-                    <input type="number" id="t1_m" value="0" min="0" max="59"> <span data-i18n="unit_m">分</span>
-                    <input type="number" id="t1_s" class="sec-input" value="0.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">秒</span>
+                    <input type="number" id="t1_h" value="0" min="0"> <span data-i18n="unit_h">h</span>
+                    <input type="number" id="t1_m" value="0" min="0" max="59"> <span data-i18n="unit_m">m</span>
+                    <input type="number" id="t1_s" class="sec-input" value="0.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
                 </div>
-                <button onclick="setCurrentTime('t1')" data-i18n="btn_sync">定位</button>
+                <button type="button" onclick="setCurrentTime('t1')" data-i18n="btn_sync">Sync</button>
             </div>
         </div>
 
+        <!-- T2 -->
         <div class="time-row">
-            <label data-i18n="lbl_t2">结束点 (T2):</label>
+            <label data-i18n="lbl_t2">End (T2):</label>
             <div class="action-btns">
                 <div class="time-inputs">
-                    <input type="number" id="t2_h" value="0" min="0"> <span data-i18n="unit_h">时</span>
-                    <input type="number" id="t2_m" value="0" min="0" max="59"> <span data-i18n="unit_m">分</span>
-                    <input type="number" id="t2_s" class="sec-input" value="15.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">秒</span>
+                    <input type="number" id="t2_h" value="0" min="0"> <span data-i18n="unit_h">h</span>
+                    <input type="number" id="t2_m" value="0" min="0" max="59"> <span data-i18n="unit_m">m</span>
+                    <input type="number" id="t2_s" class="sec-input" value="15.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
                 </div>
-                <button onclick="setCurrentTime('t2')" data-i18n="btn_sync">定位</button>
+                <button type="button" onclick="setCurrentTime('t2')" data-i18n="btn_sync">Sync</button>
             </div>
         </div>
 
-        <button onclick="previewSelection()" class="btn-preview" data-i18n="btn_preview">▶ 试听选中片段</button>
-    </div>
-
-    <button id="trimBtn" class="btn-large" data-i18n="btn_cut">✂️ 裁剪并
+        <button type="button" onclick="previewSelection()" class="btn-prev
