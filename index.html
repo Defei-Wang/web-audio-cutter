@@ -41,6 +41,193 @@
             font-size: 0.8rem;
             cursor: pointer;
         }
+
+        /* 自定义文件选择器样式 */
+        .file-upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px dashed #ced4da;
+        }
+        .file-custom-btn {
+            background: #495057;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .file-custom-btn:active {
+            background: #343a40;
+        }
+        .file-name-display {
+            font-size: 0.85rem;
+            color: #6c757d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .control-group {
+            background: #f8f9fa;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #e9ecef;
+        }
+        .time-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        @media (min-width: 420px) {
+            .time-row {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+        }
+        .time-inputs input {
+            width: 44px;
+            height: 36px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+        .time-inputs input.sec-input {
+            width: 58px;
+        }
+        .action-btns {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button {
+            touch-action: manipulation;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        button:disabled {
+            background: #a0cbf7;
+            cursor: not-allowed;
+        }
+        .btn-large {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            background: #28a745;
+        }
+        .btn-large:hover {
+            background: #218838;
+        }
+        .btn-preview {
+            background: #17a2b8;
+            width: 100%;
+            padding: 10px;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+        .hint {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        #status {
+            text-align: center;
+            color: #d35400;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 14px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-row">
+        <h2 data-i18n="title">🎵 极简音频切片器</h2>
+        <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">EN</button>
+    </div>
+    
+    <!-- 原生文件框隐藏 -->
+    <input type="file" id="audioInput" accept="audio/*" style="display: none;">
+    
+    <!-- 自定义文件选择容器 -->
+    <div class="file-upload-wrapper">
+        <button type="button" class="file-custom-btn" onclick="document.getElementById('audioInput').click()" data-i18n="btn_choose_file">选择文件</button>
+        <span id="fileNameDisplay" class="file-name-display" data-i18n="no_file_chosen">未选择任何文件</span>
+    </div>
+
+    <audio id="player" class="audio-player" controls playsinline></audio>
+
+    <div class="control-group">
+        <!-- T1 -->
+        <div class="time-row">
+            <label data-i18n="lbl_t1">起始点 (T1):</label>
+            <div class="action-btns">
+                <div class="time-inputs">
+                    <input type="number" id="t1_h" value="0" min="0"> <span data-i18n="unit_h">时</span>
+                    <input type="number" id="t1_m" value="0" min="0" max="59"> <span data-i18n="unit_m">分</span>
+                    <input type="number" id="t1_s" class="sec-input" value="0.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">秒</span>
+                </div>
+                <button onclick="setCurrentTime('t1')" data-i18n="btn_sync">定位</button>
+            </div>
+        </div>
+
+        <!-- T2 -->
+        <div class="time-row">
+            <label data-i18n="lbl_t2">结束点 (T2):</label>
+            <div class="action-btns">
+                <div class="time-inputs">
+                    <input type="number" id="t2_h" value="0" min="0"> <span data-i18n="unit_h">时</span>
+                    <input type="number" id="t2_m" value="0" min="0" max="59"> <span data-i18n="unit_m">分</span>
+                    <input type="number" id="t2_s" class="sec-input" value="15.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">秒</span>
+                </div>
+                <button onclick="setCurrentTime('t2')" data-i18n="btn_sync">定位</button>
+            </div>
+        </div>
+
+        <button onclick="previewSelection()" class="btn-preview" data-i18n="b            color: #333;
+            border: 1px solid #dcdfe6;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
         .file-upload {
             display: block;
             width: 100%;
