@@ -178,7 +178,7 @@
 <div class="container">
     <div class="header-row">
         <h2 data-i18n="title">🎵 Web Audio Cutter</h2>
-        <button id="langToggle" class="lang-btn" type="button">中文</button>
+        <button id="langToggle" class="lang-btn" type="button" onclick="toggleLanguage()">中文</button>
     </div>
     
     <input type="file" id="audioInput" accept="audio/*" style="display: none;">
@@ -217,4 +217,249 @@
             </div>
         </div>
 
-        <button type="button" onclick="previewSelection()" class="btn-prev
+        <button type="button" onclick="previewSelection()" class="btn-preview" data-i18n="btn_preview">▶ Preview Selection</button>
+    </div>
+
+    <button type="button" id="trimBtn" class="btn-large" data-i18n="btn_cut">✂️ Cut & Save (WAV)</button>
+    <div class="hint" data-i18n="hint_export">*Locally assembled into 16-bit PCM WAV with zero server upload.</div>
+    <div id="status"></div>
+</div>
+
+<script>
+    const translations = {
+        en: {
+            title: "🎵 Web Audio Cutter",
+            btn_choose_file: "Choose File",
+            no_file_chosen: "No file selected",
+            lbl_t1: "Start (T1):",
+            lbl_t2: "End (T2):",
+            unit_h: "h",
+            unit_m: "m",
+            unit_s: "s",
+            btn_sync: "Sync",
+            btn_preview: "▶ Preview Selection",
+            btn_cut: "✂️ Cut & Save (WAV)",
+            hint_export: "*Locally assembled into 16-bit PCM WAV with zero server upload.",
+            toggle_label: "中文",
+            alert_no_audio: "Please select an audio file first.",
+            alert_t2_le_t1: "End time (T2) must be greater than Start time (T1).",
+            alert_t2_exceed: "T2 exceeds total audio duration.",
+            status_parsing: "⏳ Decoding audio data...",
+            status_ready: "✅ Ready to slice.",
+            status_parse_err: "❌ Decoding failed. File format not supported.",
+            status_exporting: "⏳ Exporting segment...",
+            status_success: "✅ Export completed!"
+        },
+        zh: {
+            title: "🎵 极简音频切片器",
+            btn_choose_file: "选择文件",
+            no_file_chosen: "未选择任何文件",
+            lbl_t1: "起始点 (T1):",
+            lbl_t2: "结束点 (T2):",
+            unit_h: "时",
+            unit_m: "分",
+            unit_s: "秒",
+            btn_sync: "定位",
+            btn_preview: "▶ 试听选中片段",
+            btn_cut: "✂️ 裁剪并保存 (WAV)",
+            hint_export: "*客户端无损输出 16-bit PCM WAV 格式，无需依赖后端服务。",
+            toggle_label: "EN",
+            alert_no_audio: "请先选择音频文件",
+            alert_t2_le_t1: "结束时间 (T2) 必须大于起始时间 (T1)",
+            alert_t2_exceed: "T2 超过音频总时长",
+            status_parsing: "⏳ 正在解析音频数据...",
+            status_ready: "✅ 解析完成，可以裁剪。",
+            status_parse_err: "❌ 解析失败，格式不受支持或文件损坏。",
+            status_exporting: "⏳ 正在导出切片...",
+            status_success: "✅ 导出成功！"
+        }
+    };
+
+    let currentLang = "en";
+    let currentSelectedFileName = "";
+
+    function updateLanguageUI() {
+        const dict = translations[currentLang];
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            const key = el.getAttribute("data-i18n");
+            if (dict[key]) el.textContent = dict[key];
+        });
+        
+        const fileDisplay = document.getElementById("fileNameDisplay");
+        if (currentSelectedFileName) {
+            fileDisplay.textContent = currentSelectedFileName;
+        } else {
+            fileDisplay.textContent = dict.no_file_chosen;
+        }
+
+        document.getElementById("langToggle").textContent = dict.toggle_label;
+    }
+
+    function toggleLanguage() {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguageUI();
+    }
+
+    const audioInput = document.getElementById('audioInput');
+    const player = document.getElementById('player');
+    const statusDiv = document.getElementById('status');
+    const trimBtn = document.getElementById('trimBtn');
+
+    let audioContext = null;
+    let originalAudioBuffer = null;
+    let fileName = "cut_audio";
+    let previewTimer = null;
+
+    function getTimeInSeconds(prefix) {
+        const h = parseFloat(document.getElementById(`${prefix}_h`).value) || 0;
+        const m = parseFloat(document.getElementById(`${prefix}_m`).value) || 0;
+        const s = parseFloat(document.getElementById(`${prefix}_s`).value) || 0;
+        return h * 3600 + m * 60 + s;
+    }
+
+    function setTimeFromSeconds(prefix, totalSec) {
+        totalSec = Math.max(0, totalSec);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = (totalSec % 60).toFixed(2);
+
+        document.getElementById(`${prefix}_h`).value = h;
+        document.getElementById(`${prefix}_m`).value = m;
+        document.getElementById(`${prefix}_s`).value = s;
+    }
+
+    audioInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        currentSelectedFileName = file.name;
+        document.getElementById('fileNameDisplay').textContent = file.name;
+
+        fileName = file.name.replace(/\.[^/.]+$/, "");
+        player.src = URL.createObjectURL(file);
+        player.style.display = 'block';
+
+        statusDiv.innerText = translations[currentLang].status_parsing;
+        trimBtn.disabled = true;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            originalAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            setTimeFromSeconds('t2', Math.min(15, originalAudioBuffer.duration));
+            statusDiv.innerText = translations[currentLang].status_ready;
+            trimBtn.disabled = false;
+        } catch (err) {
+            statusDiv.innerText = translations[currentLang].status_parse_err;
+            console.error(err);
+        }
+    });
+
+    function setCurrentTime(prefix) {
+        if (!player.src) return alert(translations[currentLang].alert_no_audio);
+        setTimeFromSeconds(prefix, player.currentTime);
+    }
+
+    function previewSelection() {
+        if (!player.src) return alert(translations[currentLang].alert_no_audio);
+        const t1 = getTimeInSeconds('t1');
+        const t2 = getTimeInSeconds('t2');
+        if (t1 >= t2) return alert(translations[currentLang].alert_t2_le_t1);
+
+        if (previewTimer) clearInterval(previewTimer);
+
+        player.currentTime = t1;
+        player.play();
+
+        previewTimer = setInterval(() => {
+            if (player.currentTime >= t2 || player.paused) {
+                player.pause();
+                clearInterval(previewTimer);
+            }
+        }, 80);
+    }
+
+    trimBtn.onclick = () => {
+        if (!originalAudioBuffer) return alert(translations[currentLang].alert_no_audio);
+
+        const t1 = getTimeInSeconds('t1');
+        const t2 = getTimeInSeconds('t2');
+        if (t2 <= t1) return alert(translations[currentLang].alert_t2_le_t1);
+        if (t2 > originalAudioBuffer.duration) return alert(translations[currentLang].alert_t2_exceed);
+
+        statusDiv.innerText = translations[currentLang].status_exporting;
+
+        setTimeout(() => {
+            const sampleRate = originalAudioBuffer.sampleRate;
+            const startOffset = Math.floor(t1 * sampleRate);
+            const endOffset = Math.min(Math.floor(t2 * sampleRate), originalAudioBuffer.length);
+            const frameCount = endOffset - startOffset;
+
+            const trimmedBuffer = audioContext.createBuffer(
+                originalAudioBuffer.numberOfChannels,
+                frameCount,
+                sampleRate
+            );
+
+            for (let ch = 0; ch < originalAudioBuffer.numberOfChannels; ch++) {
+                trimmedBuffer.copyToChannel(
+                    originalAudioBuffer.getChannelData(ch).subarray(startOffset, endOffset),
+                    ch
+                );
+            }
+
+            const wavBlob = bufferToWave(trimmedBuffer, frameCount);
+            const url = URL.createObjectURL(wavBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}_cut_${t1.toFixed(1)}s-${t2.toFixed(1)}s.wav`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            statusDiv.innerText = translations[currentLang].status_success;
+        }, 50);
+    };
+
+    function bufferToWave(abuffer, len) {
+        const numOfChan = abuffer.numberOfChannels, length = len * numOfChan * 2 + 44;
+        const out = new DataView(new ArrayBuffer(length)), channels = [];
+        let sample, offset = 0, pos = 0;
+
+        function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+        function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+
+        setUint32(0x46464952);
+        setUint32(length - 8);
+        setUint32(0x45564157);
+        setUint32(0x20746d66);
+        setUint32(16);
+        setUint16(1);
+        setUint16(numOfChan);
+        setUint32(abuffer.sampleRate);
+        setUint32(abuffer.sampleRate * 2 * numOfChan);
+        setUint16(numOfChan * 2);
+        setUint16(16);
+        setUint32(0x61746164);
+        setUint32(length - pos - 4);
+
+        for (let i = 0; i < abuffer.numberOfChannels; i++) {
+            channels.push(abuffer.getChannelData(i));
+        }
+
+        while (offset < len) {
+            for (let i = 0; i < numOfChan; i++) {
+                sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                out.setInt16(pos, sample, true);
+                pos += 2;
+            }
+            offset++;
+        }
+        return new Blob([out], { type: "audio/wav" });
+    }
+
+    updateLanguageUI();
+</script>
+</body>
+</html>
