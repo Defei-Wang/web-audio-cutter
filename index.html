@@ -7,81 +7,90 @@
     <style>
         * { box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f4f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
             margin: 0;
-            padding: 16px;
-            color: #333;
+            padding: 24px 16px;
+            color: #1f2937;
         }
-        .container {
-            max-width: 520px;
+        .card {
+            max-width: 480px;
             margin: 0 auto;
             background: #ffffff;
-            padding: 20px;
+            padding: 24px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
         }
-        .header-row {
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
-        h2 {
+        .header h1 {
             margin: 0;
-            font-size: 1.3rem;
-            color: #2c3e50;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
         }
-        .lang-btn {
-            background: #eef1f5;
-            color: #333;
-            border: 1px solid #dcdfe6;
-            padding: 4px 12px;
+        .btn-lang {
+            background: transparent;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.8rem;
             cursor: pointer;
+            transition: all 0.15s;
         }
-        .file-upload-wrapper {
+        .btn-lang:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .file-box {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 16px;
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px dashed #ced4da;
+            padding: 10px 14px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
         }
-        .file-custom-btn {
-            background: #495057;
-            color: #fff;
+        .btn-upload {
+            background: #374151;
+            color: #ffffff;
+            border: none;
             padding: 6px 12px;
-            font-size: 0.85rem;
-            border-radius: 4px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border-radius: 6px;
             cursor: pointer;
-            flex-shrink: 0;
-        }
-        .file-custom-btn:active {
-            background: #343a40;
-        }
-        .file-name-display {
-            font-size: 0.85rem;
-            color: #6c757d;
             white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-upload:hover {
+            background: #1f2937;
+        }
+        .file-status {
+            font-size: 0.82rem;
+            color: #6b7280;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .audio-player {
             width: 100%;
             margin-bottom: 16px;
             display: none;
         }
-        .control-group {
-            background: #f8f9fa;
-            padding: 14px;
+        .section-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
+            padding: 16px;
             margin-bottom: 16px;
-            border: 1px solid #e9ecef;
         }
         .time-row {
             display: flex;
@@ -89,194 +98,223 @@
             gap: 8px;
             margin-bottom: 14px;
         }
-        @media (min-width: 420px) {
+        @media (min-width: 400px) {
             .time-row {
                 flex-direction: row;
                 justify-content: space-between;
                 align-items: center;
             }
         }
-        .time-inputs {
+        .time-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .time-group {
             display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .inputs-wrap {
+            display: inline-flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            color: #4b5563;
         }
-        .time-inputs input {
-            width: 44px;
-            height: 36px;
-            padding: 4px;
-            border: 1px solid #ccc;
+        .inputs-wrap input {
+            width: 42px;
+            height: 32px;
+            padding: 2px 4px;
+            border: 1px solid #d1d5db;
             border-radius: 4px;
             text-align: center;
-            font-size: 16px;
+            font-size: 16px; /* 防止 iOS 触发缩放 */
+            color: #111827;
+            background: #fff;
             -webkit-appearance: none;
         }
-        .time-inputs input.sec-input {
-            width: 58px;
+        .inputs-wrap input.sec-field {
+            width: 54px;
         }
-        .action-btns {
+        .btn-sync {
+            background: #ffffff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-sync:hover {
+            background: #eff6ff;
+        }
+        .tool-row {
             display: flex;
-            align-items: center;
             gap: 8px;
+            margin-top: 10px;
         }
-        button {
-            touch-action: manipulation;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
+        .btn-tool {
+            flex: 1;
+            background: #ffffff;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s, transform 0.1s;
-            white-space: nowrap;
+            transition: background 0.15s;
         }
-        button:active {
-            transform: scale(0.97);
+        .btn-tool:hover {
+            background: #f3f4f6;
         }
-        button:disabled {
-            background: #a0cbf7;
+        .btn-primary {
+            width: 100%;
+            background: #16a34a;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-primary:hover {
+            background: #15803d;
+        }
+        .btn-primary:disabled {
+            background: #86efac;
             cursor: not-allowed;
         }
-        .btn-large {
-            width: 100%;
-            padding: 14px;
-            font-size: 1.05rem;
-            font-weight: bold;
-            background: #28a745;
-        }
-        .btn-large:hover {
-            background: #218838;
-        }
-        .btn-preview {
-            background: #17a2b8;
-            width: 100%;
-            padding: 10px;
-            font-size: 0.95rem;
-            margin-top: 4px;
-        }
-        .hint {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 8px;
+        .footer-note {
+            font-size: 0.72rem;
+            color: #9ca3af;
             text-align: center;
+            margin-top: 12px;
             line-height: 1.4;
         }
         #status {
             text-align: center;
-            color: #d35400;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 500;
-            margin-top: 14px;
-            min-height: 20px;
+            margin-top: 12px;
+            min-height: 18px;
+            color: #ea580c;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-row">
-        <h2 data-i18n="title">🎵 Web Audio Cutter</h2>
-        <button id="langToggle" class="lang-btn" type="button" onclick="toggleLanguage()">中文</button>
+<div class="card">
+    <div class="header">
+        <h1 data-i18n="title">Web Audio Cutter</h1>
+        <button id="langToggle" class="btn-lang" type="button" onclick="toggleLanguage()">中文</button>
     </div>
     
-    <input type="file" id="audioInput" accept="audio/*" style="display: none;">
+    <input type="file" id="audioInput" accept="audio/*,video/mp4,video/*" style="display: none;">
     
-    <div class="file-upload-wrapper">
-        <button type="button" class="file-custom-btn" onclick="document.getElementById('audioInput').click()" data-i18n="btn_choose_file">Choose File</button>
-        <span id="fileNameDisplay" class="file-name-display" data-i18n="no_file_chosen">No file selected</span>
+    <div class="file-box">
+        <button type="button" class="btn-upload" onclick="document.getElementById('audioInput').click()" data-i18n="btn_choose">Choose File</button>
+        <span id="fileNameDisplay" class="file-status" data-i18n="hint_empty">Select audio or MP4 video</span>
     </div>
 
     <audio id="player" class="audio-player" controls playsinline></audio>
 
-    <div class="control-group">
-        <!-- T1 -->
+    <div class="section-box">
+        <!-- Start Point -->
         <div class="time-row">
-            <label data-i18n="lbl_t1">Start (T1):</label>
-            <div class="action-btns">
-                <div class="time-inputs">
+            <span class="time-label" data-i18n="lbl_start">Start</span>
+            <div class="time-group">
+                <div class="inputs-wrap">
                     <input type="number" id="t1_h" value="0" min="0"> <span data-i18n="unit_h">h</span>
                     <input type="number" id="t1_m" value="0" min="0" max="59"> <span data-i18n="unit_m">m</span>
-                    <input type="number" id="t1_s" class="sec-input" value="0.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
+                    <input type="number" id="t1_s" class="sec-field" value="0.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
                 </div>
-                <button type="button" onclick="setCurrentTime('t1')" data-i18n="btn_sync">Sync</button>
+                <button type="button" class="btn-sync" onclick="setCurrentTime('t1')" data-i18n="btn_sync">Sync</button>
             </div>
         </div>
 
-        <!-- T2 -->
+        <!-- End Point -->
         <div class="time-row">
-            <label data-i18n="lbl_t2">End (T2):</label>
-            <div class="action-btns">
-                <div class="time-inputs">
+            <span class="time-label" data-i18n="lbl_end">End</span>
+            <div class="time-group">
+                <div class="inputs-wrap">
                     <input type="number" id="t2_h" value="0" min="0"> <span data-i18n="unit_h">h</span>
                     <input type="number" id="t2_m" value="0" min="0" max="59"> <span data-i18n="unit_m">m</span>
-                    <input type="number" id="t2_s" class="sec-input" value="15.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
+                    <input type="number" id="t2_s" class="sec-field" value="15.0" min="0" max="59.99" step="0.1"> <span data-i18n="unit_s">s</span>
                 </div>
-                <button type="button" onclick="setCurrentTime('t2')" data-i18n="btn_sync">Sync</button>
+                <button type="button" class="btn-sync" onclick="setCurrentTime('t2')" data-i18n="btn_sync">Sync</button>
             </div>
         </div>
 
-        <button type="button" onclick="previewSelection()" class="btn-preview" data-i18n="btn_preview">▶ Preview Selection</button>
+        <div class="tool-row">
+            <button type="button" class="btn-tool" onclick="selectFullRange()" data-i18n="btn_all">Select All</button>
+            <button type="button" class="btn-tool" onclick="previewSelection()" data-i18n="btn_preview">Preview</button>
+        </div>
     </div>
 
-    <button type="button" id="trimBtn" class="btn-large" data-i18n="btn_cut">✂️ Cut & Save (WAV)</button>
-    <div class="hint" data-i18n="hint_export">*Locally assembled into 16-bit PCM WAV with zero server upload.</div>
+    <button type="button" id="trimBtn" class="btn-primary" data-i18n="btn_export">Export Selection (WAV)</button>
+    <div class="footer-note" data-i18n="hint_footer">Client-side rendering. Extracts lossless 16-bit PCM WAV directly in memory.</div>
     <div id="status"></div>
 </div>
 
 <script>
     const translations = {
         en: {
-            title: "🎵 Web Audio Cutter",
-            btn_choose_file: "Choose File",
-            no_file_chosen: "No file selected",
-            lbl_t1: "Start (T1):",
-            lbl_t2: "End (T2):",
+            title: "Web Audio Cutter",
+            btn_choose: "Choose File",
+            hint_empty: "Select audio or MP4 video",
+            lbl_start: "Start",
+            lbl_end: "End",
             unit_h: "h",
             unit_m: "m",
             unit_s: "s",
             btn_sync: "Sync",
-            btn_preview: "▶ Preview Selection",
-            btn_cut: "✂️ Cut & Save (WAV)",
-            hint_export: "*Locally assembled into 16-bit PCM WAV with zero server upload.",
+            btn_all: "Select All",
+            btn_preview: "Preview",
+            btn_export: "Export Selection (WAV)",
+            hint_footer: "Client-side rendering. Extracts lossless 16-bit PCM WAV directly in memory.",
             toggle_label: "中文",
-            alert_no_audio: "Please select an audio file first.",
-            alert_t2_le_t1: "End time (T2) must be greater than Start time (T1).",
-            alert_t2_exceed: "T2 exceeds total audio duration.",
-            status_parsing: "⏳ Decoding audio data...",
-            status_ready: "✅ Ready to slice.",
-            status_parse_err: "❌ Decoding failed. File format not supported.",
-            status_exporting: "⏳ Exporting segment...",
-            status_success: "✅ Export completed!"
+            alert_no_file: "Please select an audio or MP4 file first.",
+            alert_invalid_range: "End time must be greater than start time.",
+            alert_range_exceed: "End time exceeds total track duration.",
+            status_decoding: "Decoding media track...",
+            status_ready: "Ready.",
+            status_error: "Decoding failed. File may be corrupted or lack a supported audio track.",
+            status_processing: "Processing output...",
+            status_done: "Export completed."
         },
         zh: {
-            title: "🎵 极简音频切片器",
-            btn_choose_file: "选择文件",
-            no_file_chosen: "未选择任何文件",
-            lbl_t1: "起始点 (T1):",
-            lbl_t2: "结束点 (T2):",
+            title: "音频切片与伴音提取器",
+            btn_choose: "选择文件",
+            hint_empty: "支持常见音频格式及 MP4 视频",
+            lbl_start: "起始点",
+            lbl_end: "结束点",
             unit_h: "时",
             unit_m: "分",
             unit_s: "秒",
             btn_sync: "定位",
-            btn_preview: "▶ 试听选中片段",
-            btn_cut: "✂️ 裁剪并保存 (WAV)",
-            hint_export: "*客户端无损输出 16-bit PCM WAV 格式，无需依赖后端服务。",
+            btn_all: "全选整段",
+            btn_preview: "试听",
+            btn_export: "导出音频切片 (WAV)",
+            hint_footer: "纯浏览器本地渲染，直接提取并封装为 16-bit PCM WAV，无数据上传。",
             toggle_label: "EN",
-            alert_no_audio: "请先选择音频文件",
-            alert_t2_le_t1: "结束时间 (T2) 必须大于起始时间 (T1)",
-            alert_t2_exceed: "T2 超过音频总时长",
-            status_parsing: "⏳ 正在解析音频数据...",
-            status_ready: "✅ 解析完成，可以裁剪。",
-            status_parse_err: "❌ 解析失败，格式不受支持或文件损坏。",
-            status_exporting: "⏳ 正在导出切片...",
-            status_success: "✅ 导出成功！"
+            alert_no_file: "请先选择音频或 MP4 视频文件",
+            alert_invalid_range: "结束时间必须大于起始时间",
+            alert_range_exceed: "结束时间超出了音频总长度",
+            status_decoding: "正在解析音轨数据...",
+            status_ready: "解析完成，可剪切或导出。",
+            status_error: "解析失败，文件可能已损坏或未包含兼容音轨。",
+            status_processing: "正在生成音频切片...",
+            status_done: "导出完成。"
         }
     };
 
     let currentLang = "en";
-    let currentSelectedFileName = "";
+    let selectedFileName = "";
 
     function updateLanguageUI() {
         const dict = translations[currentLang];
@@ -284,12 +322,12 @@
             const key = el.getAttribute("data-i18n");
             if (dict[key]) el.textContent = dict[key];
         });
-        
+
         const fileDisplay = document.getElementById("fileNameDisplay");
-        if (currentSelectedFileName) {
-            fileDisplay.textContent = currentSelectedFileName;
+        if (selectedFileName) {
+            fileDisplay.textContent = selectedFileName;
         } else {
-            fileDisplay.textContent = dict.no_file_chosen;
+            fileDisplay.textContent = dict.hint_empty;
         }
 
         document.getElementById("langToggle").textContent = dict.toggle_label;
@@ -307,7 +345,7 @@
 
     let audioContext = null;
     let originalAudioBuffer = null;
-    let fileName = "cut_audio";
+    let outputBaseName = "audio";
     let previewTimer = null;
 
     function getTimeInSeconds(prefix) {
@@ -328,18 +366,24 @@
         document.getElementById(`${prefix}_s`).value = s;
     }
 
+    function selectFullRange() {
+        if (!originalAudioBuffer) return alert(translations[currentLang].alert_no_file);
+        setTimeFromSeconds('t1', 0);
+        setTimeFromSeconds('t2', originalAudioBuffer.duration);
+    }
+
     audioInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        currentSelectedFileName = file.name;
+        selectedFileName = file.name;
         document.getElementById('fileNameDisplay').textContent = file.name;
 
-        fileName = file.name.replace(/\.[^/.]+$/, "");
+        outputBaseName = file.name.replace(/\.[^/.]+$/, "");
         player.src = URL.createObjectURL(file);
         player.style.display = 'block';
 
-        statusDiv.innerText = translations[currentLang].status_parsing;
+        statusDiv.innerText = translations[currentLang].status_decoding;
         trimBtn.disabled = true;
 
         try {
@@ -347,25 +391,26 @@
             if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
             originalAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
+            setTimeFromSeconds('t1', 0);
             setTimeFromSeconds('t2', Math.min(15, originalAudioBuffer.duration));
             statusDiv.innerText = translations[currentLang].status_ready;
             trimBtn.disabled = false;
         } catch (err) {
-            statusDiv.innerText = translations[currentLang].status_parse_err;
+            statusDiv.innerText = translations[currentLang].status_error;
             console.error(err);
         }
     });
 
     function setCurrentTime(prefix) {
-        if (!player.src) return alert(translations[currentLang].alert_no_audio);
+        if (!player.src) return alert(translations[currentLang].alert_no_file);
         setTimeFromSeconds(prefix, player.currentTime);
     }
 
     function previewSelection() {
-        if (!player.src) return alert(translations[currentLang].alert_no_audio);
+        if (!player.src) return alert(translations[currentLang].alert_no_file);
         const t1 = getTimeInSeconds('t1');
         const t2 = getTimeInSeconds('t2');
-        if (t1 >= t2) return alert(translations[currentLang].alert_t2_le_t1);
+        if (t1 >= t2) return alert(translations[currentLang].alert_invalid_range);
 
         if (previewTimer) clearInterval(previewTimer);
 
@@ -381,14 +426,14 @@
     }
 
     trimBtn.onclick = () => {
-        if (!originalAudioBuffer) return alert(translations[currentLang].alert_no_audio);
+        if (!originalAudioBuffer) return alert(translations[currentLang].alert_no_file);
 
         const t1 = getTimeInSeconds('t1');
         const t2 = getTimeInSeconds('t2');
-        if (t2 <= t1) return alert(translations[currentLang].alert_t2_le_t1);
-        if (t2 > originalAudioBuffer.duration) return alert(translations[currentLang].alert_t2_exceed);
+        if (t2 <= t1) return alert(translations[currentLang].alert_invalid_range);
+        if (t2 > originalAudioBuffer.duration) return alert(translations[currentLang].alert_range_exceed);
 
-        statusDiv.innerText = translations[currentLang].status_exporting;
+        statusDiv.innerText = translations[currentLang].status_processing;
 
         setTimeout(() => {
             const sampleRate = originalAudioBuffer.sampleRate;
@@ -413,11 +458,11 @@
             const url = URL.createObjectURL(wavBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${fileName}_cut_${t1.toFixed(1)}s-${t2.toFixed(1)}s.wav`;
+            a.download = `${outputBaseName}_cut_${t1.toFixed(1)}s-${t2.toFixed(1)}s.wav`;
             a.click();
             URL.revokeObjectURL(url);
 
-            statusDiv.innerText = translations[currentLang].status_success;
+            statusDiv.innerText = translations[currentLang].status_done;
         }, 50);
     };
 
@@ -429,10 +474,10 @@
         function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
         function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
 
-        setUint32(0x46464952);
+        setUint32(0x46464952); // "RIFF"
         setUint32(length - 8);
-        setUint32(0x45564157);
-        setUint32(0x20746d66);
+        setUint32(0x45564157); // "WAVE"
+        setUint32(0x20746d66); // "fmt "
         setUint32(16);
         setUint16(1);
         setUint16(numOfChan);
@@ -440,7 +485,7 @@
         setUint32(abuffer.sampleRate * 2 * numOfChan);
         setUint16(numOfChan * 2);
         setUint16(16);
-        setUint32(0x61746164);
+        setUint32(0x61746164); // "data"
         setUint32(length - pos - 4);
 
         for (let i = 0; i < abuffer.numberOfChannels; i++) {
